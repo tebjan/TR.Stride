@@ -66,7 +66,7 @@ namespace TR.Stride.Ocean
 
         private Texture PrecomputeTwiddleFactorsAndInputIndices(RenderDrawContext context)
         {
-            var logSize = (int)MathF.Log(_size, 2);
+            var logSize = (int)Math.Log(_size, 2);
             var texture = Texture.New2D(context.GraphicsDevice, logSize, _size, PixelFormat.R32G32B32A32_Float, TextureFlags.ShaderResource | TextureFlags.UnorderedAccess);
 
             _shaders.PrecomputeTwiddleFactorsAndInputIndices.Parameters.Set(OceanFastFourierTransformBaseKeys.Size, (uint)_size);
@@ -81,7 +81,7 @@ namespace TR.Stride.Ocean
 
         internal void IFFT2D(RenderDrawContext context, Texture input, Texture buffer, bool outputToInput = false, bool scale = true, bool permute = false)
         {
-            var logSize = (int)MathF.Log(_size, 2);
+            var logSize = (int)Math.Log(_size, 2);
             var pingPong = false;
 
             // Horizontal

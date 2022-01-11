@@ -106,7 +106,7 @@ namespace TR.Stride.Ocean
 
                     static float NormalRandom(Random rng)
                     {
-                        return MathF.Cos(2 * MathF.PI * (float)rng.NextDouble()) * MathF.Sqrt(-2 * MathF.Log((float)rng.NextDouble()));
+                        return (float)Math.Cos(2 * Math.PI * (float)rng.NextDouble()) * (float)Math.Sqrt(-2 * Math.Log((float)rng.NextDouble()));
                     }
 
                     data.FFT?.Dispose();
@@ -125,8 +125,8 @@ namespace TR.Stride.Ocean
                 // Calculate initial spectrums
                 if (calculateInitials)
                 {
-                    float boundary1 = 2 * MathF.PI / component.LengthScale1 * 6f;
-                    float boundary2 = 2 * MathF.PI / component.LengthScale2 * 6f;
+                    float boundary1 = 2 * (float)Math.PI / component.LengthScale1 * 6f;
+                    float boundary2 = 2 * (float)Math.PI / component.LengthScale2 * 6f;
 
                     data.Cascades[0].CalculateInitials(renderDrawContext, _calculateInitialSpectrumShader, _calculateConjugatedSpectrumShader, component.WavesSettings, component.LengthScale0, 0.0001f, boundary1);
                     data.Cascades[1].CalculateInitials(renderDrawContext, _calculateInitialSpectrumShader, _calculateConjugatedSpectrumShader, component.WavesSettings, component.LengthScale1, boundary1, boundary2);

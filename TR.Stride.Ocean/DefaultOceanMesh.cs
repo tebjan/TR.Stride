@@ -130,7 +130,7 @@ namespace TR.Stride.Ocean
                 previousSnappedPosition = snappedPosition;
             }
 
-            scale = LengthScale * 2 * MathF.Pow(2, ClipLevels);
+            scale = LengthScale * 2 * (float)Math.Pow(2, ClipLevels);
             Skirt.Transform.Position = new Vector3(-1, 0, -1) * scale * (SkirtSize + 0.5f - 0.5f / GridSize) + previousSnappedPosition;
             Skirt.Transform.Scale = new Vector3(scale, 1, scale);
 
@@ -144,29 +144,29 @@ namespace TR.Stride.Ocean
         }
 
         private int GetActiveLodLevels(Vector3 cameraPosition)
-            => ClipLevels - MathUtil.Clamp((int)MathF.Log((1.7f * MathF.Abs(cameraPosition.Y) + 1) / LengthScale, 2), 0, ClipLevels);
+            => ClipLevels - MathUtil.Clamp((int)Math.Log((1.7f * Math.Abs(cameraPosition.Y) + 1) / LengthScale, 2), 0, ClipLevels);
 
         private float GetClipLevelScale(int level, int activeLevels)
-            => LengthScale / GridSize * MathF.Pow(2, ClipLevels - activeLevels + level + 1);
+            => LengthScale / GridSize * (float)Math.Pow(2, ClipLevels - activeLevels + level + 1);
 
         private Vector3 OffsetFromCenter(int level, int activeLevels)
-            => (MathF.Pow(2, ClipLevels) + GeometricProgressionSum(2, 2, ClipLevels - activeLevels + level + 1, ClipLevels - 1))
+            => ((float)Math.Pow(2, ClipLevels) + GeometricProgressionSum(2, 2, ClipLevels - activeLevels + level + 1, ClipLevels - 1))
                    * LengthScale / GridSize * (GridSize - 1) / 2 * new Vector3(-1, 0, -1);
 
         private float GeometricProgressionSum(float b0, float q, int n1, int n2)
-            => b0 / (1 - q) * (MathF.Pow(q, n2) - MathF.Pow(q, n1));
+            => b0 / (1 - q) * (float)(Math.Pow(q, n2) - Math.Pow(q, n1));
 
         private static Vector3 Snap(Vector3 coords, float scale)
         {
             if (coords.X >= 0)
-                coords.X = MathF.Floor(coords.X / scale) * scale;
+                coords.X = (float)Math.Floor(coords.X / scale) * scale;
             else
-                coords.X = MathF.Ceiling((coords.X - scale + 1) / scale) * scale;
+                coords.X = (float)Math.Ceiling((coords.X - scale + 1) / scale) * scale;
 
             if (coords.Z < 0)
-                coords.Z = MathF.Floor(coords.Z / scale) * scale;
+                coords.Z = (float)Math.Floor(coords.Z / scale) * scale;
             else
-                coords.Z = MathF.Ceiling((coords.Z - scale + 1) / scale) * scale;
+                coords.Z = (float)Math.Ceiling((coords.Z - scale + 1) / scale) * scale;
 
             coords.Y = 0;
             return coords;

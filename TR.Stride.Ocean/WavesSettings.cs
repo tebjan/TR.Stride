@@ -78,7 +78,7 @@ namespace TR.Stride.Ocean
         private void FillSettingsStruct(DisplaySpectrumSettings display, ref SpectrumSettings settings)
         {
             settings.Scale = display.Scale;
-            settings.Angle = display.WindDirection / 180 * MathF.PI;
+            settings.Angle = display.WindDirection / 180 * (float)Math.PI;
             settings.SpreadBlend = display.SpreadBlend;
             settings.Swell = MathUtil.Clamp(display.Swell, 0.01f, 1);
             settings.Alpha = JonswapAlpha(G, display.Fetch, display.WindSpeed);
@@ -88,9 +88,9 @@ namespace TR.Stride.Ocean
         }
 
         private float JonswapAlpha(float g, float fetch, float windSpeed)
-            => 0.076f * MathF.Pow(g * fetch / windSpeed / windSpeed, -0.22f);
+            => 0.076f * (float)Math.Pow(g * fetch / windSpeed / windSpeed, -0.22f);
 
         private float JonswapPeakFrequency(float g, float fetch, float windSpeed)
-            => 22 * MathF.Pow(windSpeed * fetch / g / g, -0.33f);
+            => 22 * (float)Math.Pow(windSpeed * fetch / g / g, -0.33f);
     }
 }

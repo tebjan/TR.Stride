@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net5.0</TargetFrameworks>
+    <TargetFrameworks>net472</TargetFrameworks>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Stride.Engine" Version="4.0.1.1428" PrivateAssets="contentfiles;analyzers" />
