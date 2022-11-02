@@ -22,16 +22,16 @@ namespace TR.Stride.Atmosphere
 
         [DataMember(21)] public float MiePhase { get; set; } = 0.8f;
         [DataMember(21)] public float MieScatteringScale { get; set; } = 0.00692f;
-        [DataMember(22)] public Color3 MieScatteringCoefficient { get; set; } = new Color3(147 / 255.0f, 147 / 255.0f, 147 / 255.0f);
+        [DataMember(22)] public Color4 MieScatteringCoefficient { get; set; } = new Color4(147 / 255.0f, 147 / 255.0f, 147 / 255.0f);
 
         [DataMember(30)] public float MieAbsorptionScale { get; set; } = 0.00077f;
-        [DataMember(31)] public Color3 MieAbsorptionCoefficient { get; set; } = new Color3(147 / 255.0f, 147 / 255.0f, 147 / 255.0f);
+        [DataMember(31)] public Color4 MieAbsorptionCoefficient { get; set; } = new Color4(147 / 255.0f, 147 / 255.0f, 147 / 255.0f);
 
         [DataMember(40)] public float RayleighScatteringScale { get; set; } = 0.03624f;
-        [DataMember(41)] public Color3 RayleighScatteringCoefficient { get; set; } = new Color3(41 / 255.0f, 95 / 255.0f, 230 / 255.0f);
+        [DataMember(41)] public Color4 RayleighScatteringCoefficient { get; set; } = new Color4(41 / 255.0f, 95 / 255.0f, 230 / 255.0f);
 
         [DataMember(50)] public float AbsorptionExctinctionScale { get; set; } = 0.00199f;
-        [DataMember(51)] public Color3 AbsorptionExctinctionCoefficient { get; set; } = new Color3(83 / 255.0f, 241 / 255.0f, 11 / 255.0f);
+        [DataMember(51)] public Color4 AbsorptionExctinctionCoefficient { get; set; } = new Color4(83 / 255.0f, 241 / 255.0f, 11 / 255.0f);
 
         [DataMember(52)] public float AbsorptionDensity0LayerWidth { get; set; } = 25.0f;
         [DataMember(53)] public float AbsorptionDensity0ConstantTerm { get; set; } = -2.0f / 3.0f;
@@ -42,7 +42,7 @@ namespace TR.Stride.Atmosphere
         [DataMember(60)] public float RayleighScaleHeight { get; set; } = 8.0f;
         [DataMember(61)] public float MieScaleHeight { get; set; } = 1.2f;
 
-        [DataMember(70)] public Color3 GroundAlbedo { get; set; } = new Color3(0, 0, 0);
+        [DataMember(70)] public Color4 GroundAlbedo { get; set; } = new Color4(0, 0, 0);
 
         [DataMember(80)] public float SunLuminanceFactor { get; set; } = 100.0f;
         [DataMember(81)] public bool RenderSunDisk { get; set; } = true;
