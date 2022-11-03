@@ -1,4 +1,5 @@
-﻿using Stride.Core.Collections;
+﻿using Stride.Core;
+using Stride.Core.Collections;
 using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Rendering;
@@ -18,12 +19,15 @@ namespace TR.Stride.Atmosphere
     {
         public override Type[] LightTypes { get; } = { typeof(AtmosphereLightDirectional) };
 
+        [DataMember]
+        public AtmosphereRenderFeature AtmosphereRenderFeature { get; set; }
+
         public override void Initialize(RenderContext context)
         {
         }
 
         public override LightShaderGroupDynamic CreateLightShaderGroup(RenderDrawContext context, ILightShadowMapShaderGroupData shadowShaderGroupData)
-            => new DirectionalLightShaderGroup(context.RenderContext, shadowShaderGroupData);
+            => new DirectionalLightShaderGroup(context.RenderContext, shadowShaderGroupData, AtmosphereRenderFeature);
 
         private class DirectionalLightShaderGroup : LightShaderGroupDynamic
         {
@@ -31,10 +35,12 @@ namespace TR.Stride.Atmosphere
             private ValueParameterKey<DirectionalLightData> _lightsKey;
             private FastListStruct<DirectionalLightData> _lightsData = new FastListStruct<DirectionalLightData>(8);
             private string _compositionName;
+            AtmosphereRenderFeature atmosphereRenderFeature;
 
-            public DirectionalLightShaderGroup(RenderContext renderContext, ILightShadowMapShaderGroupData shadowGroupData)
+            public DirectionalLightShaderGroup(RenderContext renderContext, ILightShadowMapShaderGroupData shadowGroupData, AtmosphereRenderFeature atmosphereRenderFeature)
                 : base(renderContext, shadowGroupData)
             {
+                this.atmosphereRenderFeature = atmosphereRenderFeature;
             }
 
             public override void UpdateLayout(string compositionName)
@@ -65,17 +71,6 @@ namespace TR.Stride.Atmosphere
 
                 if (!(lights[lightRange.Start].Light.Type is AtmosphereLightDirectional light))
                     return;
-
-                // Fetch compositor and find atmosphere render feature
-                var sceneSystem = context.RenderContext.Services.GetService<SceneSystem>();
-                var graphicsCompositor = sceneSystem.GraphicsCompositor;
-
-                AtmosphereRenderFeature atmosphereRenderFeature = null;
-                foreach (var feature in graphicsCompositor.RenderFeatures)
-                {
-                    if (feature is AtmosphereRenderFeature atmoshpere)
-                        atmosphereRenderFeature = atmoshpere;
-                }
 
                 if (atmosphereRenderFeature == null || atmosphereRenderFeature.TransmittanceLutTexture == null)
                     return;

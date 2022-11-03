@@ -330,7 +330,16 @@ namespace TR.Stride.Atmosphere
                         coefficients[i] = coefficients[i] * SphericalHarmonics.BaseCoefficients[i];
                     }
 
-                    lightSkybox.Skybox.DiffuseLightingParameters.Set(SphericalHarmonicsEnvironmentColorKeys.SphericalColors, coefficients);
+                    try
+                    {
+                        lightSkybox.Skybox.DiffuseLightingParameters.Set(SkyboxKeys.Shader, new ShaderClassSource("SphericalHarmonicsEnvironmentColor", _lamberFiltering.HarmonicOrder));
+                        lightSkybox.Skybox.DiffuseLightingParameters.Set(SphericalHarmonicsEnvironmentColorKeys.SphericalColors, coefficients);
+                    }
+                    catch (Exception e)
+                    {
+
+                        Console.WriteLine(e);
+                    }
 
                     if (_specularRadiancePrefilterGGX == null)
                     {
