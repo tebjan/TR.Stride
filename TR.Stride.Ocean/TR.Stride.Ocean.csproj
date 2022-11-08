@@ -3,19 +3,24 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Stride.Engine" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Video" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Physics" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Navigation" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Particles" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.UI" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Core" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="4.1.0.1734" PrivateAssets="contentfiles;analyzers" IncludeAssets="build" />
+    <PackageReference Include="Stride.Engine" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.Video" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.Physics" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.Navigation" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.Particles" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.UI" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.Core" PrivateAssets="contentfiles;analyzers" />
+    <PackageReference Include="Stride.Core.Assets.CompilerApp" PrivateAssets="contentfiles;analyzers" IncludeAssets="build" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TR.Stride.Common\TR.Stride.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="Effects\MaterialOceanSurfaceEmissiveShading.sdsl.cs">
+      <DesignTime>True</DesignTime>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+    </Compile>
     <Compile Update="Effects\OceanCalculateConjugatedSpectrum.sdsl.cs">
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -103,6 +108,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Update="Effects\MaterialOceanSurfaceEmissiveShading.sdsl">
+      <LastGenOutput>MaterialOceanSurfaceEmissiveShading.sdsl.cs</LastGenOutput>
+    </None>
     <None Update="Effects\OceanCalculateConjugatedSpectrum.sdsl">
       <LastGenOutput>OceanCalculateConjugatedSpectrum.sdsl.cs</LastGenOutput>
     </None>

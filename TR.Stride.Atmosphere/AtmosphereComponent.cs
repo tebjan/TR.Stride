@@ -3,6 +3,7 @@ using Stride.Core.Annotations;
 using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Engine.Design;
+using Stride.Graphics;
 using Stride.Input;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,8 @@ namespace TR.Stride.Atmosphere
         /// or it wont get captured very well close to the camera, large scales work the same but in reverse :)
         /// </summary>
         [DataMember(203)] public float AtmosphereScatteringVolumeKmPerSlice { get; set; } = 4.0f;
+
+        [DataMember(204)] public float Exposure { get; set; } = 2.0f;
 
         [DataMember(300)] public bool EnableClouds { get; set; } = true;
         [DataMember(301)] public float CloudScale { get; set; } = 0.0001f;
