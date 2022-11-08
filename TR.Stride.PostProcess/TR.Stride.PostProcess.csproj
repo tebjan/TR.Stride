@@ -3,9 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Stride.Engine" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Core" PrivateAssets="contentfiles;analyzers" />
-    <PackageReference Include="Stride.Core.Assets.CompilerApp" PrivateAssets="contentfiles;analyzers" IncludeAssets="build" />
+    <ProjectReference Include="..\TR.Stride.Common\TR.Stride.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Effects\BloomBrightPass.sdsl.cs">

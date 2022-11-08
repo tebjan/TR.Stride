@@ -3,17 +3,15 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Stride.Engine" />
-    <PackageReference Include="Stride.Video" />
-    <PackageReference Include="Stride.Physics" />
-    <PackageReference Include="Stride.Navigation" />
-    <PackageReference Include="Stride.Particles" />
-    <PackageReference Include="Stride.UI" />
-    <PackageReference Include="Stride.Core" />
-    <PackageReference Include="Stride.Core.Assets.CompilerApp" PrivateAssets="contentfiles; analyzers" IncludeAssets="build" />
+    <ProjectReference Include="..\TR.Stride.Common\TR.Stride.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Effects\AtmosphereCommon.sdsl.cs">
+      <DesignTime>True</DesignTime>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="Effects\AtmosphereForwardRender.sdsl.cs">
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
@@ -47,13 +45,11 @@
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
-      <DependentUpon>AtmosphereMultipleScatteringTextureEffectCS.sdsl</DependentUpon>
     </Compile>
     <Compile Update="Effects\AtmosphereParametersBase.sdsl.cs">
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
-      <DependentUpon>AtmosphereParametersBase.sdsl</DependentUpon>
     </Compile>
     <Compile Update="Effects\AtmosphereRender.sdfx.cs">
       <DesignTime>True</DesignTime>
@@ -64,7 +60,6 @@
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
-      <DependentUpon>AtmosphereRenderScatteringCameraVolume.sdsl</DependentUpon>
     </Compile>
     <Compile Update="Effects\AtmosphereRenderSkyCommon.sdsl.cs">
       <DesignTime>True</DesignTime>
@@ -75,13 +70,6 @@
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
-      <DependentUpon>AtmosphereRenderSkyRayMarching.sdsl</DependentUpon>
-    </Compile>
-    <Compile Update="Effects\AtmosphereForwardRender.sdsl.cs">
-      <DesignTime>True</DesignTime>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>AtmosphereForwardRender.sdsl</DependentUpon>
     </Compile>
     <Compile Update="Effects\AtmosphereRenderSkyViewLut.sdsl.cs">
       <DesignTime>True</DesignTime>
@@ -102,6 +90,9 @@
   <ItemGroup>
     <None Update="Effects\AtmosphereCommon.sdsl">
       <LastGenOutput>AtmosphereCommon.sdsl.cs</LastGenOutput>
+    </None>
+    <None Update="Effects\AtmosphereForwardRender.sdsl">
+      <LastGenOutput>AtmosphereForwardRender.sdsl.cs</LastGenOutput>
     </None>
     <None Update="Effects\AtmosphereForwardShadingEffect.sdfx">
       <LastGenOutput>AtmosphereForwardShadingEffect.sdfx.cs</LastGenOutput>
@@ -135,9 +126,6 @@
     </None>
     <None Update="Effects\AtmosphereRenderSkyRayMarching.sdsl">
       <LastGenOutput>AtmosphereRenderSkyRayMarching.sdsl.cs</LastGenOutput>
-    </None>
-    <None Update="Effects\AtmosphereForwardRender.sdsl">
-      <LastGenOutput>AtmosphereForwardRender.sdsl.cs</LastGenOutput>
     </None>
     <None Update="Effects\AtmosphereRenderSkyViewLut.sdsl">
       <LastGenOutput>AtmosphereRenderSkyViewLut.sdsl.cs</LastGenOutput>
