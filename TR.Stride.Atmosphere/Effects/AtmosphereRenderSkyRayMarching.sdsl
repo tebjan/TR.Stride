@@ -74,7 +74,7 @@ shader AtmosphereRenderSkyRayMarching<bool FastSkyEnabled, bool FastAerialPerspe
                 if (EnableClouds)
                 {
                     float clouds = CalculateClouds(WorldDir);
-                    output.Luminance.xyz = lerp(output.Luminance.xyz, 2, clouds);
+                    output.Luminance.xyz = lerp(output.Luminance.xyz * float3(0.8, 0.8, 1.4), 2, clouds);
                 }
 
                 return output;
