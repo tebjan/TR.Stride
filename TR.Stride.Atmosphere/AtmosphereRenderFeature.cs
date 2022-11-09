@@ -68,6 +68,7 @@ namespace TR.Stride.Atmosphere
         private RadiancePrefilteringGGX _specularRadiancePrefilterGGX = null;
 
         public AtmosphereComponent Atmosphere { get; private set; }
+        public Texture LastContextRenderTarget { get; private set; }
 
         protected override void InitializeCore()
         {
@@ -245,6 +246,11 @@ namespace TR.Stride.Atmosphere
             }
 
             // Transmittance LUT
+            var target = commandList.RenderTarget;
+            var depth = commandList.DepthStencilBuffer;
+            var view = commandList.Viewport;
+
+            using(context.RenderContext.PushRenderViewAndRestore(renderView))
             using (context.PushRenderTargetsAndRestore())
             {
                 SetParameters(context.RenderContext, renderView, renderObject.Component, _transmittanceLutEffect.Parameters, null);
@@ -254,6 +260,8 @@ namespace TR.Stride.Atmosphere
                 _transmittanceLutEffect.SetOutput(TransmittanceLutTexture);
                 _transmittanceLutEffect.Draw(context, "Atmosphere.Transmittance LUT");
             }
+
+            commandList.SetRenderTargetAndViewport(depth, target);
 
             commandList.ResourceBarrierTransition(TransmittanceLutTexture, GraphicsResourceState.PixelShaderResource);
 
@@ -368,6 +376,7 @@ namespace TR.Stride.Atmosphere
             // Ray march atmosphere render
             using (context.QueryManager.BeginProfile(Color4.Black, ProfilingKeys.RayMarching))
             {
+                LastContextRenderTarget = context.CommandList.RenderTarget;
                 SetParameters(context.RenderContext, renderView, renderObject.Component, _atmosphereParameters, null);
                 UpdateCBuffers(commandList, renderNodeReference, renderNode, renderEffect, ref drawAtmosphere);
 

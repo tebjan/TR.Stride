@@ -3,6 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\TR.Stride.Atmosphere\TR.Stride.Atmosphere.csproj" />
     <ProjectReference Include="..\TR.Stride.Common\TR.Stride.Common.csproj" />
   </ItemGroup>
   <ItemGroup>

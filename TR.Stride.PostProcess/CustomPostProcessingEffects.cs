@@ -18,6 +18,8 @@ namespace TR.Stride.PostProcess
     [DataContract]
     public class BloomSettings
     {
+        [DataMember, DefaultValue(1.0f)] public float Strength { get; set; } = 0.5f;
+        [DataMember, DefaultValue(1.0f)] public float Radius { get; set; } = 1.0f;
         [DataMember, DefaultValue(5)] public int NumberOfDownSamples { get; set; } = 5;
         [DataMember, DefaultValue(2.0f)] public float BrightPassSteepness { get; set; } = 2.0f;
         [DataMember, DefaultValue(4.0f)] public float ThresholdOffset { get; set; } = 4.0f;
@@ -26,13 +28,13 @@ namespace TR.Stride.PostProcess
     [DataContract]
     public class ExposureSettings
     {
-        [DefaultValue(true)] public bool AutoKey { get; set; } = true;
-        [DefaultValue(0.08f)] public float Key { get; set; }  = 0.08f;
-        [DefaultValue(1.0f / 64.0f)] public float MinExposure { get; set; }  = 1.0f / 64.0f;
-        [DefaultValue(64.0f)] public float MaxExposure { get; set; } = 64.0f;
-        [DefaultValue(1.1f)] public float AdaptionSpeed { get; set; } = 1.1f;
-        [DefaultValue(2.0f)] public float Exposure { get; set; } = 2.0f;
-        [DefaultValue(true)] public bool AutoExposure { get; set; } = true;
+        [DataMember, DefaultValue(true)] public bool AutoKey { get; set; } = true;
+        [DataMember, DefaultValue(0.08f)] public float Key { get; set; }  = 0.08f;
+        [DataMember, DefaultValue(1.0f / 64.0f)] public float MinExposure { get; set; }  = 1.0f / 64.0f;
+        [DataMember, DefaultValue(64.0f)] public float MaxExposure { get; set; } = 64.0f;
+        [DataMember, DefaultValue(1.1f)] public float AdaptionSpeed { get; set; } = 1.1f;
+        [DataMember, DefaultValue(2.0f)] public float Exposure { get; set; } = 2.0f;
+        [DataMember, DefaultValue(true)] public bool AutoExposure { get; set; } = true;
     }
 
     [DataContract(nameof(CustomPostProcessingEffects))]
@@ -40,7 +42,7 @@ namespace TR.Stride.PostProcess
     public class CustomPostProcessingEffects : ImageEffect, IImageEffectRenderer, IPostProcessingEffects
     {
         public bool RequiresVelocityBuffer => false;
-        public bool RequiresNormalBuffer => false;
+        public bool RequiresNormalBuffer => AmbientOcclusion?.RequiresNormalBuffer ?? false;
         public bool RequiresSpecularRoughnessBuffer => false;
 
         [DataMember] public Guid Id { get; set; } = Guid.NewGuid();
@@ -58,7 +60,9 @@ namespace TR.Stride.PostProcess
 
         [DataMember("Bloom"), Category] public BloomSettings BloomSettings { get; set; } = new BloomSettings();
         [DataMember("Exposure"), Category] public ExposureSettings ExposureSettings { get; set; } = new ExposureSettings();
-        [DataMemberIgnore] public bool DebugHistogram { get; set; } = false;
+        [DataMember] public bool DebugHistogram { get; set; } = false;
+
+        [DataMember] public IAmbientOcclusionEffect AmbientOcclusion { get; set; }
 
         private List<Texture> _bloomRenderTargets = new(5);
 
@@ -165,6 +169,17 @@ namespace TR.Stride.PostProcess
 
             var currentInput = input;
 
+            // Ambient occlusion
+            var aoOutput = currentInput;
+
+            if (AmbientOcclusion != null)
+            {
+                var normals = InputCount > 2 ? GetInput(2) : null;
+                AmbientOcclusion.Draw(context, currentInput, GetInput(1), normals, out aoOutput);
+            }
+
+            currentInput = aoOutput;
+
             if (ExposureSettings.AutoExposure)
             {
                 context.CommandList.ClearReadWrite(_histogram, UInt4.Zero);
@@ -228,8 +243,8 @@ namespace TR.Stride.PostProcess
                 _bloomUpSample.SetInput(0, bloomInput);
                 _bloomUpSample.SetOutput(bloomRenderTarget);
 
-                _bloomUpSample.Parameters.Set(BloomUpSampleKeys.Strength, 1.0f);
-                _bloomUpSample.Parameters.Set(BloomUpSampleKeys.Radius, 1.0f);
+                _bloomUpSample.Parameters.Set(BloomUpSampleKeys.Strength, BloomSettings.Strength);
+                _bloomUpSample.Parameters.Set(BloomUpSampleKeys.Radius, BloomSettings.Radius);
 
                 _bloomUpSample.Draw(context, $"Bloom up Sample {i}");
 
