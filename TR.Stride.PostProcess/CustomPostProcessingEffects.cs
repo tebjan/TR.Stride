@@ -58,11 +58,37 @@ namespace TR.Stride.PostProcess
         private Buffer _histogram = null;
         private Buffer _exposure = null;
 
+        [DataMember] public IAmbientOcclusionEffect AmbientOcclusion { get; set; }
+
+        /// <summary>
+        /// Gets the antialiasing effect.
+        /// </summary>
+        /// <value>The antialiasing.</value>
+        /// <userdoc>Perform anti-aliasing filtering, smoothing the jagged edges of models</userdoc>
+        [DataMember(80)]
+        [Display("Type", "Antialiasing")]
+        public IScreenSpaceAntiAliasingEffect Antialiasing { get; set; } // TODO: Unload previous anti aliasing
+        private ImageEffectShader rangeCompress;
+        private ImageEffectShader rangeDecompress;
+
+        /// Gets the fog effect.
+        /// </summary>
+        [DataMember(7)]
+        [Category]
+        public Fog Fog { get; private set; }
+
+        /// <summary>
+        /// Gets the depth of field effect.
+        /// </summary>
+        /// <value>The depth of field.</value>
+        /// <userdoc>Accentuate regions of the image by blurring objects in the foreground or background</userdoc>
+        [DataMember(10)]
+        [Category]
+        public DepthOfField DepthOfField { get; private set; }
+
         [DataMember("Bloom"), Category] public BloomSettings BloomSettings { get; set; } = new BloomSettings();
         [DataMember("Exposure"), Category] public ExposureSettings ExposureSettings { get; set; } = new ExposureSettings();
         [DataMember] public bool DebugHistogram { get; set; } = false;
-
-        [DataMember] public IAmbientOcclusionEffect AmbientOcclusion { get; set; }
 
         private List<Texture> _bloomRenderTargets = new(5);
 
@@ -79,6 +105,28 @@ namespace TR.Stride.PostProcess
 
         public CustomPostProcessingEffects()
         {
+            //Outline = new Outline
+            //{
+            //    Enabled = false
+            //};
+
+            Fog = new Fog
+            {
+                Enabled = false
+            };
+
+            //AmbientOcclusion = new AmbientOcclusion();
+            //LocalReflections = new LocalReflections();
+            DepthOfField = new DepthOfField();
+            //luminanceEffect = new LuminanceEffect();
+            //BrightFilter = new BrightFilter();
+            //Bloom = new Bloom();
+            //LightStreak = new LightStreak();
+            //LensFlare = new LensFlare();
+            Antialiasing = new FXAAEffect();
+            rangeCompress = new ImageEffectShader("RangeCompressorShader");
+            rangeDecompress = new ImageEffectShader("RangeDecompressorShader");
+            //colorTransformsGroup = new ColorTransformGroup();
         }
 
         protected override void InitializeCore()
@@ -100,6 +148,20 @@ namespace TR.Stride.PostProcess
                 true);
 
             _bloomUpSample.BlendState = new BlendStateDescription(Blend.One, Blend.One);
+            
+            Fog = ToLoadAndUnload(Fog);
+            //Bloom = new Bloom();
+            DepthOfField = ToLoadAndUnload(DepthOfField);
+            //luminanceEffect = ToLoadAndUnload(luminanceEffect);
+            //BrightFilter = ToLoadAndUnload(BrightFilter);
+            //Bloom = ToLoadAndUnload(Bloom);
+            //LightStreak = ToLoadAndUnload(LightStreak);
+            //LensFlare = ToLoadAndUnload(LensFlare);
+            //this can be null if no SSAA is selected in the editor
+            if (Antialiasing != null) Antialiasing = ToLoadAndUnload(Antialiasing);
+
+            rangeCompress = ToLoadAndUnload(rangeCompress);
+            rangeDecompress = ToLoadAndUnload(rangeDecompress);
         }
 
         protected override void Unload()
@@ -167,7 +229,68 @@ namespace TR.Stride.PostProcess
                 input = newInput;
             }
 
+            var inputDepthTexture = GetInput(1); // Depth
+
             var currentInput = input;
+
+            var fxaa = Antialiasing as FXAAEffect;
+            bool aaFirst = true;// BloomSettings.Enabled;
+            bool needAA = Antialiasing != null && Antialiasing.Enabled;
+
+            // do AA here, first. (hybrid method from Karis2013)
+            if (aaFirst && needAA)
+            {
+                // do AA:
+                if (fxaa != null)
+                    fxaa.InputLuminanceInAlpha = true;
+
+                var bufferIndex = 1;
+                if (Antialiasing.RequiresDepthBuffer)
+                    Antialiasing.SetInput(bufferIndex++, inputDepthTexture);
+
+                bool requiresVelocityBuffer = Antialiasing.RequiresVelocityBuffer;
+                if (requiresVelocityBuffer)
+                {
+                    Antialiasing.SetInput(bufferIndex++, GetInput(6));
+                }
+
+                var aaSurface = NewScopedRenderTarget2D(input.Width, input.Height, input.Format);
+                if (Antialiasing.NeedRangeDecompress)
+                {
+                    // explanation:
+                    // The Karis method (Unreal Engine 4.1x), uses a hybrid pipeline to execute AA.
+                    // The AA is usually done at the end of the pipeline, but we don't benefit from
+                    // AA for the posteffects, which is a shame.
+                    // The Karis method, executes AA at the beginning, but for AA to be correct, it must work post tonemapping,
+                    // and even more in fact, in gamma space too. Plus, it waits for the alpha=luma to be a "perceptive luma" so also gamma space.
+                    // in our case, working in gamma space created monstruous outlining artefacts around eggageratedely strong constrasted objects (way in hdr range).
+                    // so AA works in linear space, but still with gamma luma, as a light tradeoff to supress artefacts.
+
+                    // create a 16 bits target for FXAA:
+
+                    // render range compression & perceptual luma to alpha channel:
+                    rangeCompress.SetInput(currentInput);
+                    rangeCompress.SetOutput(aaSurface);
+                    rangeCompress.Draw(context);
+
+                    Antialiasing.SetInput(0, aaSurface);
+                    Antialiasing.SetOutput(currentInput);
+                    Antialiasing.Draw(context);
+
+                    // reverse tone LDR to HDR:
+                    rangeDecompress.SetInput(currentInput);
+                    rangeDecompress.SetOutput(aaSurface);
+                    rangeDecompress.Draw(context);
+                }
+                else
+                {
+                    Antialiasing.SetInput(0, currentInput);
+                    Antialiasing.SetOutput(aaSurface);
+                    Antialiasing.Draw(context);
+                }
+
+                currentInput = aaSurface;
+            }
 
             // Ambient occlusion
             var aoOutput = currentInput;
@@ -179,6 +302,26 @@ namespace TR.Stride.PostProcess
             }
 
             currentInput = aoOutput;
+
+            if (Fog.Enabled && inputDepthTexture != null)
+            {
+                // Fog
+                var fogOutput = NewScopedRenderTarget2D(input.Width, input.Height, input.Format);
+                Fog.SetColorDepthInput(currentInput, inputDepthTexture, context.RenderContext.RenderView.NearClipPlane, context.RenderContext.RenderView.FarClipPlane);
+                Fog.SetOutput(fogOutput);
+                Fog.Draw(context);
+                currentInput = fogOutput;
+            }
+
+            if (DepthOfField.Enabled && inputDepthTexture != null)
+            {
+                // DoF
+                var dofOutput = NewScopedRenderTarget2D(input.Width, input.Height, input.Format);
+                DepthOfField.SetColorDepthInput(currentInput, inputDepthTexture);
+                DepthOfField.SetOutput(dofOutput);
+                DepthOfField.Draw(context);
+                currentInput = dofOutput;
+            }
 
             if (ExposureSettings.AutoExposure)
             {
@@ -255,11 +398,14 @@ namespace TR.Stride.PostProcess
 
             var bloomOutput = bloomInput;
 
+            bool aaLast = needAA && !aaFirst;
+            var toneOutput = aaLast ? NewScopedRenderTarget2D(input.Width, input.Height, input.Format) : output;
+
             // Tone map
             _toneMapShader.Parameters.Set(ExposureCommonKeys.Exposure, _exposure);
             _toneMapShader.SetInput(0, currentInput);
             _toneMapShader.SetInput(1, bloomOutput);
-            _toneMapShader.SetOutput(output);
+            _toneMapShader.SetOutput(toneOutput);
             _toneMapShader.Draw(context, "ToneMap ASEC");
 
             if (DebugHistogram)
@@ -278,6 +424,33 @@ namespace TR.Stride.PostProcess
 
                 context.CommandList.Copy(debugOutput, output);
             }
+
+            // do AA here, last, if not already done.
+            if (aaLast)
+            {
+                Antialiasing.SetInput(toneOutput);
+                Antialiasing.SetOutput(output);
+                Antialiasing.Draw(context);
+            }
+        }
+
+        /// <summary>
+        /// Disables all post processing effects.
+        /// </summary>
+        public void DisableAll()
+        {
+            //Outline.Enabled = false;
+            Fog.Enabled = false;
+            //AmbientOcclusion.Enabled = false;
+            //LocalReflections.Enabled = false;
+            DepthOfField.Enabled = false;
+            //Bloom.Enabled = false;
+            //LightStreak.Enabled = false;
+            //LensFlare.Enabled = false;
+            Antialiasing.Enabled = false;
+            rangeCompress.Enabled = false;
+            rangeDecompress.Enabled = false;
+            //colorTransformsGroup.Enabled = false;
         }
     }
 }
