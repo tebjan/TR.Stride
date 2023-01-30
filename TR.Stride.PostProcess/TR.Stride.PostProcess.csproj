@@ -47,6 +47,11 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
     </Compile>
+    <Compile Update="Effects\ToneMapACESFitted.sdsl.cs">
+      <DesignTime>True</DesignTime>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+    </Compile>
     <Compile Update="Effects\ToneMapASEC.sdsl.cs">
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -77,6 +82,9 @@
     </None>
     <None Update="Effects\PostEffectCommon.sdsl">
       <LastGenOutput>PostEffectCommon.sdsl.cs</LastGenOutput>
+    </None>
+    <None Update="Effects\ToneMapACESFitted.sdsl">
+      <LastGenOutput>ToneMapACESFitted.sdsl.cs</LastGenOutput>
     </None>
     <None Update="Effects\ToneMapASEC.sdsl">
       <LastGenOutput>ToneMapASEC.sdsl.cs</LastGenOutput>

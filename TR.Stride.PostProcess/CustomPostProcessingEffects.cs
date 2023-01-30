@@ -5,6 +5,7 @@ using Stride.Rendering;
 using Stride.Rendering.Compositing;
 using Stride.Rendering.ComputeEffect;
 using Stride.Rendering.Images;
+using Stride.Rendering.Materials;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,9 +42,13 @@ namespace TR.Stride.PostProcess
     [Display("Custom Post-processing effects")]
     public class CustomPostProcessingEffects : ImageEffect, IImageEffectRenderer, IPostProcessingEffects
     {
-        public bool RequiresVelocityBuffer => false;
-        public bool RequiresNormalBuffer => AmbientOcclusion?.RequiresNormalBuffer ?? false;
-        public bool RequiresSpecularRoughnessBuffer => false;
+        private ColorTransformGroup colorTransformsGroup;
+
+        public bool RequiresVelocityBuffer => Antialiasing?.RequiresVelocityBuffer ?? false;
+        public bool RequiresNormalBuffer => AmbientOcclusion?.RequiresNormalBuffer ?? false || LocalReflections.Enabled;
+        public bool RequiresSpecularRoughnessBuffer => LocalReflections.Enabled;
+
+        public Exception LastException { get; protected set; }
 
         [DataMember] public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -59,6 +64,42 @@ namespace TR.Stride.PostProcess
         private Buffer _exposure = null;
 
         [DataMember] public IAmbientOcclusionEffect AmbientOcclusion { get; set; }
+
+        /// <summary>
+        /// Gets the local reflections effect.
+        /// </summary>
+        /// <value>The local reflection technique.</value>
+        /// <userdoc>Reflect the scene in glossy materials</userdoc>
+        [DataMember(9)]
+        [Category]
+        public LocalReflections LocalReflections { get; private set; }
+
+        /// <summary>
+        /// Gets the light streak effect.
+        /// </summary>
+        /// <value>The light streak.</value>
+        /// <userdoc>Bleed bright points along streaks</userdoc>
+        [DataMember(40)]
+        [Category]
+        public LightStreak LightStreak { get; private set; }
+
+        /// <summary>
+        /// Gets the lens flare effect.
+        /// </summary>
+        /// <value>The lens flare.</value>
+        /// <userdoc>Simulate artifacts produced by the internal reflection or scattering of light within camera lenses</userdoc>
+        [DataMember(50)]
+        [Category]
+        public LensFlare LensFlare { get; private set; }
+
+        /// <summary>
+        /// Gets the final color transforms.
+        /// </summary>
+        /// <value>The color transforms.</value>
+        /// <userdoc>Perform a transformation onto the image colors</userdoc>
+        [DataMember(70)]
+        [Category]
+        public ColorTransformGroup ColorTransforms => colorTransformsGroup;
 
         /// <summary>
         /// Gets the antialiasing effect.
@@ -116,17 +157,17 @@ namespace TR.Stride.PostProcess
             };
 
             //AmbientOcclusion = new AmbientOcclusion();
-            //LocalReflections = new LocalReflections();
+            LocalReflections = new LocalReflections();
             DepthOfField = new DepthOfField();
             //luminanceEffect = new LuminanceEffect();
             //BrightFilter = new BrightFilter();
             //Bloom = new Bloom();
-            //LightStreak = new LightStreak();
-            //LensFlare = new LensFlare();
+            LightStreak = new LightStreak();
+            LensFlare = new LensFlare();
             Antialiasing = new FXAAEffect();
             rangeCompress = new ImageEffectShader("RangeCompressorShader");
             rangeDecompress = new ImageEffectShader("RangeDecompressorShader");
-            //colorTransformsGroup = new ColorTransformGroup();
+            colorTransformsGroup = new ColorTransformGroup();
         }
 
         protected override void InitializeCore()
@@ -150,13 +191,13 @@ namespace TR.Stride.PostProcess
             _bloomUpSample.BlendState = new BlendStateDescription(Blend.One, Blend.One);
             
             Fog = ToLoadAndUnload(Fog);
-            //Bloom = new Bloom();
+            LocalReflections = ToLoadAndUnload(LocalReflections);
             DepthOfField = ToLoadAndUnload(DepthOfField);
             //luminanceEffect = ToLoadAndUnload(luminanceEffect);
             //BrightFilter = ToLoadAndUnload(BrightFilter);
             //Bloom = ToLoadAndUnload(Bloom);
-            //LightStreak = ToLoadAndUnload(LightStreak);
-            //LensFlare = ToLoadAndUnload(LensFlare);
+            LightStreak = ToLoadAndUnload(LightStreak);
+            LensFlare = ToLoadAndUnload(LensFlare);
             //this can be null if no SSAA is selected in the editor
             if (Antialiasing != null) Antialiasing = ToLoadAndUnload(Antialiasing);
 
@@ -190,27 +231,49 @@ namespace TR.Stride.PostProcess
 
         public void Draw(RenderDrawContext drawContext, RenderOutputValidator outputValidator, Texture[] inputs, Texture inputDepthStencil, Texture outputTarget)
         {
-            var colorIndex = outputValidator.Find<ColorTargetSemantic>();
-            if (colorIndex < 0)
-                return;
-
-            SetInput(0, inputs[colorIndex]);
-            SetInput(1, inputDepthStencil);
-
-            var normalsIndex = outputValidator.Find<NormalTargetSemantic>();
-            if (normalsIndex >= 0)
+            try
             {
-                SetInput(2, inputs[normalsIndex]);
-            }
+                var colorIndex = outputValidator.Find<ColorTargetSemantic>();
+                if (colorIndex < 0)
+                    return;
 
-            var specularRoughnessIndex = outputValidator.Find<SpecularColorRoughnessTargetSemantic>();
-            if (specularRoughnessIndex >= 0)
+                SetInput(0, inputs[colorIndex]);
+                SetInput(1, inputDepthStencil);
+
+                var normalsIndex = outputValidator.Find<NormalTargetSemantic>();
+                if (normalsIndex >= 0)
+                {
+                    SetInput(2, inputs[normalsIndex]);
+                }
+
+                var specularRoughnessIndex = outputValidator.Find<SpecularColorRoughnessTargetSemantic>();
+                if (specularRoughnessIndex >= 0)
+                {
+                    SetInput(3, inputs[specularRoughnessIndex]);
+                }
+
+                var reflectionIndex0 = outputValidator.Find<OctahedronNormalSpecularColorTargetSemantic>();
+                var reflectionIndex1 = outputValidator.Find<EnvironmentLightRoughnessTargetSemantic>();
+                if (reflectionIndex0 >= 0 && reflectionIndex1 >= 0)
+                {
+                    SetInput(4, inputs[reflectionIndex0]);
+                    SetInput(5, inputs[reflectionIndex1]);
+                }
+
+                var velocityIndex = outputValidator.Find<VelocityTargetSemantic>();
+                if (velocityIndex != -1)
+                {
+                    SetInput(6, inputs[velocityIndex]);
+                }
+
+                SetOutput(outputTarget);
+                Draw(drawContext);
+            }
+            catch (Exception e)
             {
-                SetInput(3, inputs[specularRoughnessIndex]);
-            }
 
-            SetOutput(outputTarget);
-            Draw(drawContext);
+                LastException = e;
+            }
         }
 
         protected override void DrawCore(RenderDrawContext context)
@@ -293,15 +356,29 @@ namespace TR.Stride.PostProcess
             }
 
             // Ambient occlusion
-            var aoOutput = currentInput;
-
             if (AmbientOcclusion != null)
             {
                 var normals = InputCount > 2 ? GetInput(2) : null;
-                AmbientOcclusion.Draw(context, currentInput, GetInput(1), normals, out aoOutput);
+                AmbientOcclusion.Draw(context, currentInput, GetInput(1), normals, out var aoOutput);
+
+                currentInput = aoOutput;
             }
 
-            currentInput = aoOutput;
+            if (LocalReflections.Enabled && inputDepthTexture != null)
+            {
+                var normalsBuffer = GetInput(2);
+                var specularRoughnessBuffer = GetInput(3);
+
+                if (normalsBuffer != null && specularRoughnessBuffer != null)
+                {
+                    // Local reflections
+                    var rlrOutput = NewScopedRenderTarget2D(input.Width, input.Height, input.Format);
+                    LocalReflections.SetInputSurfaces(currentInput, inputDepthTexture, normalsBuffer, specularRoughnessBuffer);
+                    LocalReflections.SetOutput(rlrOutput);
+                    LocalReflections.Draw(context);
+                    currentInput = rlrOutput;
+                }
+            }
 
             if (Fog.Enabled && inputDepthTexture != null)
             {
@@ -323,7 +400,7 @@ namespace TR.Stride.PostProcess
                 currentInput = dofOutput;
             }
 
-            if (ExposureSettings.AutoExposure)
+            if (ExposureSettings?.AutoExposure ?? false)
             {
                 context.CommandList.ClearReadWrite(_histogram, UInt4.Zero);
 
@@ -398,16 +475,6 @@ namespace TR.Stride.PostProcess
 
             var bloomOutput = bloomInput;
 
-            bool aaLast = needAA && !aaFirst;
-            var toneOutput = aaLast ? NewScopedRenderTarget2D(input.Width, input.Height, input.Format) : output;
-
-            // Tone map
-            _toneMapShader.Parameters.Set(ExposureCommonKeys.Exposure, _exposure);
-            _toneMapShader.SetInput(0, currentInput);
-            _toneMapShader.SetInput(1, bloomOutput);
-            _toneMapShader.SetOutput(toneOutput);
-            _toneMapShader.Draw(context, "ToneMap ASEC");
-
             if (DebugHistogram)
             {
                 // Create UAV enabled debug target
@@ -424,6 +491,61 @@ namespace TR.Stride.PostProcess
 
                 context.CommandList.Copy(debugOutput, output);
             }
+
+            // Light streak pass
+            if (LightStreak.Enabled)
+            {
+                LightStreak.SetInput(brightPassTexture);
+                LightStreak.SetOutput(currentInput);
+                LightStreak.Draw(context);
+            }
+
+            // Lens flare pass
+            if (LensFlare.Enabled)
+            {
+                LensFlare.SetInput(brightPassTexture);
+                LensFlare.SetOutput(currentInput);
+                LensFlare.Draw(context);
+            }
+
+            bool aaLast = needAA && !aaFirst;
+            var toneOutput = NewScopedRenderTarget2D(input.Width, input.Height, input.Format);
+
+
+            // When FXAA is enabled we need to detect whether the ColorTransformGroup should output the Luminance into the alpha or not
+            var luminanceToChannelTransform = colorTransformsGroup.PostTransforms.Get<LuminanceToChannelTransform>();
+            if (fxaa != null)
+            {
+                if (luminanceToChannelTransform == null)
+                {
+                    luminanceToChannelTransform = new LuminanceToChannelTransform { ColorChannel = ColorChannel.A };
+                    colorTransformsGroup.PostTransforms.Add(luminanceToChannelTransform);
+                }
+
+                // Only enabled when FXAA is enabled and InputLuminanceInAlpha is true
+                luminanceToChannelTransform.Enabled = fxaa.Enabled && fxaa.InputLuminanceInAlpha;
+            }
+            else if (luminanceToChannelTransform != null)
+            {
+                luminanceToChannelTransform.Enabled = false;
+            }
+
+            // Tone map
+            _toneMapShader.Parameters.Set(ExposureCommonKeys.Exposure, _exposure);
+            _toneMapShader.SetInput(0, currentInput);
+            _toneMapShader.SetInput(1, bloomOutput);
+            _toneMapShader.SetOutput(toneOutput);
+            _toneMapShader.Draw(context, "ToneMap ASEC");
+
+            currentInput = toneOutput;
+
+            var colorTransformOutput = aaLast ? NewScopedRenderTarget2D(input.Width, input.Height, input.Format) : output;
+
+            // Color transform group pass (tonemap, color grading)
+            var lastEffect = colorTransformsGroup.Enabled ? (ImageEffect)colorTransformsGroup : Scaler;
+            lastEffect.SetInput(currentInput);
+            lastEffect.SetOutput(colorTransformOutput);
+            lastEffect.Draw(context);
 
             // do AA here, last, if not already done.
             if (aaLast)
@@ -442,15 +564,15 @@ namespace TR.Stride.PostProcess
             //Outline.Enabled = false;
             Fog.Enabled = false;
             //AmbientOcclusion.Enabled = false;
-            //LocalReflections.Enabled = false;
+            LocalReflections.Enabled = false;
             DepthOfField.Enabled = false;
             //Bloom.Enabled = false;
-            //LightStreak.Enabled = false;
-            //LensFlare.Enabled = false;
+            LightStreak.Enabled = false;
+            LensFlare.Enabled = false;
             Antialiasing.Enabled = false;
             rangeCompress.Enabled = false;
             rangeDecompress.Enabled = false;
-            //colorTransformsGroup.Enabled = false;
+            colorTransformsGroup.Enabled = false;
         }
     }
 }
