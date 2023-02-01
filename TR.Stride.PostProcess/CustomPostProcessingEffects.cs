@@ -355,15 +355,6 @@ namespace TR.Stride.PostProcess
                 currentInput = aaSurface;
             }
 
-            // Ambient occlusion
-            if (AmbientOcclusion != null)
-            {
-                var normals = InputCount > 2 ? GetInput(2) : null;
-                AmbientOcclusion.Draw(context, currentInput, GetInput(1), normals, out var aoOutput);
-
-                currentInput = aoOutput;
-            }
-
             if (LocalReflections.Enabled && inputDepthTexture != null)
             {
                 var normalsBuffer = GetInput(2);
@@ -378,6 +369,15 @@ namespace TR.Stride.PostProcess
                     LocalReflections.Draw(context);
                     currentInput = rlrOutput;
                 }
+            }
+
+            // Ambient occlusion
+            if (AmbientOcclusion != null)
+            {
+                var normals = InputCount > 2 ? GetInput(2) : null;
+                AmbientOcclusion.Draw(context, currentInput, inputDepthTexture, normals, out var aoOutput);
+
+                currentInput = aoOutput;
             }
 
             if (Fog.Enabled && inputDepthTexture != null)
