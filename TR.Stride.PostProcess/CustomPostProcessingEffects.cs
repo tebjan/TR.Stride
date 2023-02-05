@@ -56,6 +56,7 @@ namespace TR.Stride.PostProcess
         private ImageEffectShader _bloomDownSample;
         private ImageEffectShader _bloomUpSample;
         private ImageEffectShader _toneMapShader;
+        private ImageEffectShader _sanitizer;
         private ComputeEffectShader _histogramShader;
         private ComputeEffectShader _histogramReduceShader;
         private ComputeEffectShader _histogramDrawDebug;
@@ -174,6 +175,7 @@ namespace TR.Stride.PostProcess
         {
             base.InitializeCore();
 
+            _sanitizer = ToLoadAndUnload(new ImageEffectShader("Sanitizer"));
             _brightPassShader = ToLoadAndUnload(new ImageEffectShader("BloomBrightPass"));
             _bloomDownSample = ToLoadAndUnload(new ImageEffectShader("BloomDownSample"));
             _bloomUpSample = ToLoadAndUnload(new ImageEffectShader("BloomUpSample"));
@@ -285,10 +287,14 @@ namespace TR.Stride.PostProcess
                 return;
             }
 
-            if (input == output)
+            //if (input == output)
             {
                 var newInput = NewScopedRenderTarget2D(input.Description);
-                context.CommandList.Copy(input, newInput);
+                //context.CommandList.Copy(input, newInput);
+
+                _sanitizer.SetInput(0, input);
+                _sanitizer.SetOutput(newInput);
+                _sanitizer.Draw(context, "Sanitizer");
                 input = newInput;
             }
 

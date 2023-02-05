@@ -1,0 +1,22 @@
+﻿shader Sanitizer : ImageEffectShader
+{
+    stage override float4 Shading()
+    {
+        
+        float4 c = Texture0.Sample(PointSampler, streams.TexCoord);
+        
+        if(any(min(c, 100) != c))
+        {
+            //get neighbour pixels and average them
+            //not entirely correct, because the neightbour could be NaN too
+            float4 c1 = Texture0.Sample(PointSampler, streams.TexCoord + float2(-3,0) * Texture0TexelSize);
+            float4 c2 = Texture0.Sample(PointSampler, streams.TexCoord + float2(3,0) * Texture0TexelSize);
+            float4 c3 = Texture0.Sample(PointSampler, streams.TexCoord + float2(0,-3) * Texture0TexelSize);
+            float4 c4 = Texture0.Sample(PointSampler, streams.TexCoord + float2(0,3) * Texture0TexelSize);
+            c = (c1+c2+c3+c4)/4;
+            //c = float4(0, 0, 0, 1);
+        }
+
+        return c;
+    }
+};

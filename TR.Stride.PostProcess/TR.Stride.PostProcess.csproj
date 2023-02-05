@@ -47,6 +47,11 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
     </Compile>
+    <Compile Update="Effects\Sanitizer.sdsl.cs">
+      <DesignTime>True</DesignTime>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+    </Compile>
     <Compile Update="Effects\ToneMapACESFitted.sdsl.cs">
       <DesignTime>True</DesignTime>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -59,6 +64,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Update="Effects\Sanitizer.sdsl">
+      <LastGenOutput>Sanitizer.sdsl.cs</LastGenOutput>
+      <Generator>StrideShaderKeyGenerator</Generator>
+    </None>
     <None Update="Effects\BloomBrightPass.sdsl">
       <LastGenOutput>BloomBrightPass.sdsl.cs</LastGenOutput>
     </None>
